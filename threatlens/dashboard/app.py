@@ -104,21 +104,24 @@ def main() -> None:
 
         # Page Navigation
         PAGES = {
-            "Security Overview": render_page_security_overview,
-            "Analyze Sample": render_page_analyze_sample,
-            "Prediction Results": render_page_prediction_results,
-            "Local SHAP Explainability": render_page_local_shap,
-            "Global Feature Analysis": render_page_global_analysis,
-            "Simulated Threshold Analysis": render_page_threshold_analysis,
-            "Model Information": render_page_model_information,
+            "🛡️ Security Overview": render_page_security_overview,
+            "🔬 Analyze Sample": render_page_analyze_sample,
+            "📊 Prediction Results": render_page_prediction_results,
+            "🔍 Local SHAP Explainability": render_page_local_shap,
+            "🌐 Global Feature Analysis": render_page_global_analysis,
+            "⚖️ Simulated Threshold Analysis": render_page_threshold_analysis,
+            "ℹ️ Model Information": render_page_model_information,
         }
 
         # Check for programmatic navigation request
         default_index = 0
-        if "nav_target" in st.session_state and st.session_state.nav_target in PAGES:
-            target_page = st.session_state.nav_target
+        if "nav_target" in st.session_state:
+            target_page = str(st.session_state.nav_target)
             del st.session_state.nav_target
-            default_index = list(PAGES.keys()).index(target_page)
+            for i, page_name in enumerate(PAGES.keys()):
+                if target_page in page_name or page_name in target_page:
+                    default_index = i
+                    break
 
         selected_page = st.radio(
             "Navigation Menu",

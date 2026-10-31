@@ -26,6 +26,48 @@ DARK_THEME_CSS = """
     border-right: 1px solid #1e293b;
 }
 
+/* Hide Streamlit auto-generated multi-page navigation menu completely */
+[data-testid="stSidebarNav"],
+div[data-testid="stSidebarNav"],
+ul[data-testid="stSidebarNavItems"],
+section[data-testid="stSidebarNav"],
+div[data-testid="stSidebarNavSeparator"],
+nav[data-testid="stSidebarNav"] {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Sleek Sidebar Navigation Radio Styling */
+[data-testid="stSidebar"] div.stRadio > div[role="radiogroup"] {
+    gap: 4px;
+}
+
+[data-testid="stSidebar"] div.stRadio > div[role="radiogroup"] > label {
+    background-color: #131b2e;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    width: 100%;
+}
+
+[data-testid="stSidebar"] div.stRadio > div[role="radiogroup"] > label:hover {
+    background-color: #1a253c;
+    border-color: #38bdf8;
+}
+
+[data-testid="stSidebar"] div.stRadio > div[role="radiogroup"] > label:has(input:checked) {
+    background-color: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #f8fafc;
+    font-weight: 600;
+}
+
 /* Card container */
 .soc-card {
     background-color: #131b2e;
