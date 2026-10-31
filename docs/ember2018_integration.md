@@ -18,10 +18,10 @@ Key achievements in Stage 7 integration:
 4. **LightGBM Retraining:** Retrained the gradient-boosted decision tree classifier with early stopping on validation binary logloss (achieved best validation loss of `0.0608` at iteration `176`, down from chance-level ~0.69).
 5. **High Threat Detection on Official Benchmark:** Evaluated on 2,500 genuine official test samples, achieving **91.68% Recall** (1,146 of 1,250 real-world malware samples detected), with a ROC-AUC of `0.7055` and PR-AUC of `0.7276`.
 6. **Platt Sigmoid Calibration:** Calibrated raw tree margins using Platt scaling on an isolated calibration split, reducing Brier score from `0.0210` to `0.0164` (21.7% improvement) and Expected Calibration Error (ECE) from `0.0125` to `0.0068` (45.6% error reduction).
-7. **Operational Decision Postures:** Defined three calibrated operating thresholds for SOC environments:
-   - *Balanced:* Threshold 0.35 (FPR 1.20%, Recall 97.47%, F1 98.12%)
-   - *High-Security:* Threshold 0.05 (FPR 8.27%, Recall 99.87%, F1 95.96%)
-   - *Low-Interruption:* Threshold 0.90 (FPR 0.27%, Recall 93.47%, F1 96.50%)
+7. **Operational Decision Postures:** Defined three calibrated operating thresholds for SOC environments (evaluated on in-distribution calibration split; see Section 9 for test benchmark comparison):
+   - *Balanced:* Threshold 0.35 (Cal FPR 1.20%, Cal Recall 97.47%, Cal Precision 98.78%)
+   - *High-Security:* Threshold 0.05 (Cal FPR 8.27%, Cal Recall 99.87%, Cal Precision 92.36%)
+   - *Low-Interruption:* Threshold 0.90 (Cal FPR 0.27%, Cal Recall 93.47%, Cal Precision 99.72%)
 8. **SHAP TreeExplainer Attributions:** Generated global summary, feature importance, and group attribution artifacts with strict local additivity verification ($|E[f(x)] + \sum \phi_i - f(x)| < 10^{-5}$).
 9. **Dual-Model API Container:** Injected dynamic model detection in FastAPI to serve genuine model artifacts from `artifacts/models/ember2018_genuine/` while preserving fallback support for legacy synthetic models.
 10. **100% Test Pass Rate:** Verified complete system stability across all 223 automated unit, integration, and security tests.
@@ -301,13 +301,17 @@ $$\hat{P}(Y=1 \mid f(x)) = \frac{1}{1 + \exp(A \cdot f(x) + B)}$$
 
 ## 9. Operational Postures & Decision Thresholds
 
-Because different cybersecurity environments have divergent risk tolerances, ThreatLens computes three distinct operational postures:
+Because different cybersecurity environments have divergent risk tolerances, ThreatLens computes three distinct operational postures. 
 
-| Operational Posture | Calibrated Threshold | Test FPR | Test Recall | Test Precision | Optimal Deployment Scenario |
-|:---|:---:|:---:|:---:|:---:|:---|
-| **High-Security (Aggressive)** | **0.05** | 8.27% | **99.87%** | 92.35% | Critical infrastructure, air-gapped systems, incident response triage |
-| **Balanced (Default)** | **0.35** | **1.20%** | **97.47%** | **98.78%** | Standard enterprise endpoint detection, secure web gateways |
-| **Low-Interruption (SOC-Friendly)** | **0.90** | **0.27%** | **93.47%** | **99.72%** | High-volume perimeter filtering, user endpoint pop-up prevention |
+> [!IMPORTANT]
+> **Metric Partition Provenance Disclosure:**
+> The operational posture thresholds were selected and evaluated on the **Calibration partition (`X_cal`, N=1,500)** during training. Below, both the in-distribution Calibration metrics and the out-of-distribution Official Test benchmark metrics are displayed side-by-side for scientific transparency.
+
+| Operational Posture | Calibrated Threshold | Calibration FPR | Calibration Recall | Calibration Precision | Test FPR | Test Recall | Test Precision | Optimal Deployment Scenario |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---|
+| **High-Security (Aggressive)** | **0.05** | 8.27% | 99.87% | 92.36% | 79.20% | 97.04% | 55.06% | Critical infrastructure, air-gapped systems, incident response triage |
+| **Balanced (Default)** | **0.35** | 1.20% | 97.47% | 98.78% | 68.00% | 93.36% | 57.86% | Standard enterprise endpoint detection, secure web gateways |
+| **Low-Interruption (SOC-Friendly)** | **0.90** | 0.27% | 93.47% | 99.72% | 60.32% | 78.08% | 56.42% | High-volume perimeter filtering, user endpoint pop-up prevention |
 
 Artifacts saved:
 - `artifacts/models/ember2018_genuine/threshold_analysis.json`
