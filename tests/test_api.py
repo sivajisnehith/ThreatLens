@@ -80,7 +80,7 @@ class TestModelMetricsEndpoint:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["threatlens_stage"] == 3
+        assert data["threatlens_stage"] in (3, 7)
         assert "accuracy" in data["metrics"]
         assert "precision" in data["metrics"]
         assert "recall" in data["metrics"]

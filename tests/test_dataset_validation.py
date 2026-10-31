@@ -29,7 +29,7 @@ class TestEmberFeatureGroups:
 
         # Test last group
         start, end = EmberFeatureGroups.get_group_indices("exports")
-        assert start == 2283
+        assert start == 2223
         assert end == 2351
 
         # Test unknown group returns (0, 0)

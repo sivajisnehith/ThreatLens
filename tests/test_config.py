@@ -100,17 +100,17 @@ class TestEmberFeatureGroups:
         start, end = EmberFeatureGroups.get_group_indices("byteentropy")
         assert (start, end) == (256, 512)
         start, end = EmberFeatureGroups.get_group_indices("strings")
-        assert (start, end) == (512, 768)
+        assert (start, end) == (512, 616)
         start, end = EmberFeatureGroups.get_group_indices("general")
-        assert (start, end) == (768, 778)
+        assert (start, end) == (616, 626)
         start, end = EmberFeatureGroups.get_group_indices("header")
-        assert (start, end) == (778, 839)
+        assert (start, end) == (626, 688)
         start, end = EmberFeatureGroups.get_group_indices("section")
-        assert (start, end) == (839, 1035)
+        assert (start, end) == (688, 943)
         start, end = EmberFeatureGroups.get_group_indices("imports")
-        assert (start, end) == (1035, 2283)
+        assert (start, end) == (943, 2223)
         start, end = EmberFeatureGroups.get_group_indices("exports")
-        assert (start, end) == (2283, 2351)
+        assert (start, end) == (2223, 2351)
 
     def test_get_group_indices(self):
         start, end = EmberFeatureGroups.get_group_indices("histogram")
@@ -118,7 +118,7 @@ class TestEmberFeatureGroups:
         assert end == 256
 
         start, end = EmberFeatureGroups.get_group_indices("exports")
-        assert start == 2283
+        assert start == 2223
         assert end == 2351
 
     def test_get_all_group_names(self):

@@ -113,34 +113,33 @@ def main():
             if args.force_download or not loader._check_files_exist():
                 loader.download_dataset()
 
-        # Load full dataset (train + test combined for re-splitting)
-        logger.info("Loading training split...")
+        # Step 1: Load training data and isolated official test data
+        logger.info("Step 1/6: Loading EMBER training partition...")
         X_train_raw, y_train_raw = loader.load_or_generate(
             split="train",
             max_samples=args.max_samples,
             generate_if_missing=True,
         )
-        logger.info("Loading test split...")
+        logger.info(f"Loaded training partition: {len(X_train_raw)} samples (Benign: {np.sum(y_train_raw == 0)}, Malicious: {np.sum(y_train_raw == 1)})")
+
+        logger.info("Loading official isolated test partition (test_features.jsonl)...")
+        test_samples_limit = (args.max_samples // 4) if args.max_samples else None
         X_test_raw, y_test_raw = loader.load_or_generate(
             split="test",
-            max_samples=args.max_samples // 5 if args.max_samples else None,
+            max_samples=test_samples_limit,
             generate_if_missing=True,
         )
+        logger.info(f"Loaded official test partition: {len(X_test_raw)} samples (Benign: {np.sum(y_test_raw == 0)}, Malicious: {np.sum(y_test_raw == 1)})")
 
-        # Combine for fresh splits
-        X = np.vstack([X_train_raw, X_test_raw])
-        y = np.hstack([y_train_raw, y_test_raw])
-        logger.info(f"Combined dataset: {X.shape[0]} samples, {X.shape[1]} features")
-
-        # Step 2: Validate dataset
+        # Step 2: Validate dataset integrity
         if not args.skip_validation:
-            logger.info("Step 2/6: Validating dataset...")
-            validation_report = validate_dataset(X, y)
+            logger.info("Step 2/6: Validating training dataset integrity...")
+            validation_report = validate_dataset(X_train_raw, y_train_raw)
             if not validation_report.is_valid:
                 logger.error("Dataset validation FAILED:")
                 for err in validation_report.errors:
                     logger.error(f"  - {err}")
-                if not args.max_samples:  # Don't fail on synthetic test data
+                if not args.max_samples:
                     sys.exit(1)
             else:
                 logger.info("Dataset validation PASSED")
@@ -148,19 +147,43 @@ def main():
             logger.info("Step 2/6: Skipping validation")
             validation_report = None
 
-        # Step 3: Split dataset
-        logger.info("Step 3/6: Splitting dataset...")
-        custom_split = None
-        if args.split_ratios:
-            from threatlens.config import SplitConfig
-            custom_split = SplitConfig(
-                TRAIN_RATIO=args.split_ratios[0],
-                VAL_RATIO=args.split_ratios[1],
-                CAL_RATIO=args.split_ratios[2],
-                TEST_RATIO=args.split_ratios[3],
-                RANDOM_SEED=args.seed,
-            )
-        splits = split_dataset(X, y, config=custom_split or SPLIT_CONFIG)
+        # Step 3: Split training partition into Train, Validation, Calibration (Zero Leakage)
+        logger.info("Step 3/6: Partitioning training data into Train, Val, and Calibration splits...")
+        from threatlens.dataset.split import DatasetSplits
+        from sklearn.model_selection import train_test_split
+
+        # Split ratios for training partition (Train ~70%, Val ~15%, Cal ~15%)
+        val_cal_ratio = 0.30
+        X_train, X_valcal, y_train, y_valcal = train_test_split(
+            X_train_raw,
+            y_train_raw,
+            test_size=val_cal_ratio,
+            random_state=args.seed,
+            stratify=y_train_raw,
+        )
+
+        X_val, X_cal, y_val, y_cal = train_test_split(
+            X_valcal,
+            y_valcal,
+            test_size=0.50,
+            random_state=args.seed,
+            stratify=y_valcal,
+        )
+
+        # Official test partition remains strictly isolated
+        X_test = X_test_raw
+        y_test = y_test_raw
+
+        splits = DatasetSplits(
+            X_train=X_train,
+            y_train=y_train,
+            X_val=X_val,
+            y_val=y_val,
+            X_cal=X_cal,
+            y_cal=y_cal,
+            X_test=X_test,
+            y_test=y_test,
+        )
 
         logger.info("Split summary:")
         for name, info in splits.summary().items():

@@ -63,66 +63,77 @@ class FeatureContribution:
 
 # Canonical definitions for known scalar features in the EMBER 2018 schema
 _GENERAL_FEATURE_METADATA: Dict[int, Dict[str, str]] = {
-    768: {
+    616: {
         "name": "ember_general_size",
         "label": "file_size",
         "description": "Total physical binary file size on disk in bytes.",
         "limitations": "File size alone is non-specific; large files may indicate bundling or overlay padding, while small files may indicate droppers or stagers.",
     },
-    769: {
+    617: {
         "name": "ember_general_vsize",
         "label": "virtual_size",
         "description": "Allocated virtual memory size (SizeOfImage) when mapped into process memory.",
         "limitations": "Discrepancies between disk size and virtual size often indicate packing or runtime expansion, but standard packers and self-extracting installers also exhibit this.",
     },
-    770: {
+    618: {
         "name": "ember_general_has_debug",
         "label": "has_debug",
         "description": "Presence of PE debug directory: 1 if debug symbols/directory present, 0 if stripped.",
         "limitations": "Stripped debug information is standard in production commercial binaries as well as malware.",
     },
-    771: {
+    619: {
         "name": "ember_general_exports",
         "label": "exports_count",
         "description": "Total number of exported functions/symbols in the PE export table.",
         "limitations": "High export counts are expected in dynamic link libraries (DLLs); zero exports are standard for stand-alone executables.",
     },
-    772: {
+    620: {
         "name": "ember_general_imports",
         "label": "imports_count",
         "description": "Total number of imported functions/APIs referenced across all imported DLLs.",
         "limitations": "Abnormally low import counts suggest runtime API resolution (e.g. LoadLibrary/GetProcAddress) or packing, but could also reflect statically linked minimal binaries.",
     },
-    773: {
+    621: {
         "name": "ember_general_has_relocations",
         "label": "has_relocations",
         "description": "Presence of base relocations section: 1 if present (.reloc), 0 if absent.",
         "limitations": "Absence of relocations is common in older non-ASLR 32-bit executables and stripped malware.",
     },
-    774: {
+    622: {
         "name": "ember_general_has_resources",
         "label": "has_resources",
         "description": "Presence of PE resource directory (.rsrc): 1 if present, 0 if absent.",
         "limitations": "Legitimate applications commonly bundle UI resources; malware frequently stages encrypted payloads or decoy icons in resources.",
     },
-    775: {
+    623: {
         "name": "ember_general_has_signature",
         "label": "has_signature",
         "description": "Presence of Authenticode digital certificate directory: 1 if signed, 0 if unsigned.",
         "limitations": "Unsigned binaries are widespread in open-source and internal software; signatures may also be self-signed, expired, or stolen.",
     },
-    776: {
+    624: {
         "name": "ember_general_has_tls",
         "label": "has_tls",
         "description": "Presence of Thread Local Storage (TLS) directory: 1 if present, 0 if absent.",
         "limitations": "TLS callbacks allow code execution before the main entry point (often leveraged for evasion), but TLS is also standard in multithreaded CRT runtimes.",
     },
-    777: {
+    625: {
         "name": "ember_general_symbols",
         "label": "symbols_count",
         "description": "Number of symbol table entries in the COFF symbol table.",
         "limitations": "COFF symbol tables are virtually always stripped (0) in modern Windows production PE binaries.",
     },
+    # Also support legacy synthetic index mappings for backward compatibility
+    768: {"name": "ember_general_size", "label": "file_size", "description": "Total physical binary file size on disk in bytes.", "limitations": "File size alone is non-specific."},
+    769: {"name": "ember_general_vsize", "label": "virtual_size", "description": "Allocated virtual memory size when mapped.", "limitations": "Discrepancies often indicate packing."},
+    770: {"name": "ember_general_has_debug", "label": "has_debug", "description": "Presence of PE debug directory.", "limitations": "Stripped debug info is standard."},
+    771: {"name": "ember_general_exports", "label": "exports_count", "description": "Total number of exported functions.", "limitations": "Expected in DLLs."},
+    772: {"name": "ember_general_imports", "label": "imports_count", "description": "Total number of imported functions.", "limitations": "Low imports suggest packing."},
+    773: {"name": "ember_general_has_relocations", "label": "has_relocations", "description": "Presence of base relocations section.", "limitations": "Common in non-ASLR."},
+    774: {"name": "ember_general_has_resources", "label": "has_resources", "description": "Presence of PE resource directory.", "limitations": "Bundled in legitimate UI & malware."},
+    775: {"name": "ember_general_has_signature", "label": "has_signature", "description": "Presence of Authenticode digital certificate.", "limitations": "Unsigned binaries widespread."},
+    776: {"name": "ember_general_has_tls", "label": "has_tls", "description": "Presence of Thread Local Storage (TLS) directory.", "limitations": "TLS callbacks allow pre-main execution."},
+    777: {"name": "ember_general_symbols", "label": "symbols_count", "description": "Number of symbol table entries in COFF symbol table.", "limitations": "Usually stripped in release."},
 }
 
 _STRINGS_SCALAR_METADATA: Dict[int, Dict[str, str]] = {
@@ -137,31 +148,31 @@ _STRINGS_SCALAR_METADATA: Dict[int, Dict[str, str]] = {
         "limitations": "Statistical aggregate; does not reveal whether strings are human-readable text, URLs, or base64 blobs.",
     },
     514: {
-        "name": "ember_strings_entropy",
-        "description": "Information entropy across extracted printable character distribution.",
-        "limitations": "Reflects character diversity, but cannot distinguish encoded payloads from natural multi-language text.",
-    },
-    515: {
         "name": "ember_strings_printables",
         "description": "Total count of printable ASCII characters across all extracted strings.",
         "limitations": "Volume metric correlated with overall binary size and string density.",
     },
-    516: {
+    611: {
+        "name": "ember_strings_entropy",
+        "description": "Information entropy across extracted printable character distribution.",
+        "limitations": "Reflects character diversity, but cannot distinguish encoded payloads from natural multi-language text.",
+    },
+    612: {
         "name": "ember_strings_paths",
         "description": "Count of file path patterns (e.g. 'C:\\', '/usr/') identified in strings.",
         "limitations": "Heuristic regex match; subject to false positives from binary sequences resembling file paths.",
     },
-    517: {
+    613: {
         "name": "ember_strings_urls",
         "description": "Count of URL/URI patterns (e.g. 'http://', 'https://') identified in strings.",
         "limitations": "Heuristic regex match; detects network references but does not verify active C2 communication.",
     },
-    518: {
+    614: {
         "name": "ember_strings_registry",
         "description": "Count of Windows Registry key references (e.g. 'HKEY_', 'Software\\') in strings.",
         "limitations": "Registry access is standard across legitimate Windows software as well as persistence malware.",
     },
-    519: {
+    615: {
         "name": "ember_strings_mz",
         "description": "Count of embedded 'MZ' PE header magic signatures found within string data.",
         "limitations": "Embedded MZ headers often indicate bundled sub-executables or payload dropping, but can also occur in installers or self-extracting zip archives.",
@@ -169,35 +180,46 @@ _STRINGS_SCALAR_METADATA: Dict[int, Dict[str, str]] = {
 }
 
 _HEADER_SCALAR_METADATA: Dict[int, Dict[str, str]] = {
-    778: {
+    626: {
         "name": "ember_header_timestamp",
         "description": "COFF compilation timestamp (TimeDateStamp) in 32-bit Unix epoch seconds.",
         "limitations": "Timestamps can be easily spoofed (timestomping) or zeroed out during compilation/linking.",
     },
-    779: {
-        "name": "ember_header_machine",
-        "description": "Target processor machine architecture code from COFF header (e.g. 0x14C for i386, 0x8664 for AMD64).",
-        "limitations": "Specifies instruction set architecture; does not convey intent.",
+    677: {
+        "name": "ember_header_major_image_version",
+        "description": "Major image version number from optional header.",
+        "limitations": "Developer-specified version metadata; easily modified.",
     },
-    780: {
-        "name": "ember_header_number_of_sections",
-        "description": "Total number of PE sections defined in COFF section headers.",
-        "limitations": "Packed binaries often have very few (1-2) sections or non-standard section layouts.",
+    678: {
+        "name": "ember_header_minor_image_version",
+        "description": "Minor image version number from optional header.",
+        "limitations": "Developer-specified version metadata; easily modified.",
     },
-    781: {
-        "name": "ember_header_pointer_to_symbol_table",
-        "description": "COFF symbol table file offset.",
-        "limitations": "Almost universally 0 in production release binaries.",
+    679: {
+        "name": "ember_header_major_linker_version",
+        "description": "Major linker version number identifying compiler/linker toolchain.",
+        "limitations": "Indicates build toolchain age; can be forged or altered.",
     },
-    782: {
-        "name": "ember_header_number_of_symbols",
-        "description": "Total number of entries in the COFF symbol table.",
-        "limitations": "Almost universally 0 in production release binaries.",
+    680: {
+        "name": "ember_header_minor_linker_version",
+        "description": "Minor linker version number identifying compiler/linker toolchain.",
+        "limitations": "Toolchain version detail.",
     },
-    783: {
-        "name": "ember_header_size_of_optional_header",
-        "description": "Size of the optional header in bytes (typically 224 for PE32, 240 for PE32+).",
+    685: {
+        "name": "ember_header_sizeof_code",
+        "description": "Size of the executable code section (.text) in bytes.",
+        "limitations": "Correlated with binary complexity; small sizes can indicate stagers.",
+    },
+    686: {
+        "name": "ember_header_sizeof_headers",
+        "description": "Total size of all PE headers rounded up to file alignment.",
         "limitations": "Structural PE format field.",
+    },
+    # Also support legacy indices
+    778: {
+        "name": "ember_header_timestamp",
+        "description": "COFF compilation timestamp (TimeDateStamp) in 32-bit Unix epoch seconds.",
+        "limitations": "Timestamps can be easily spoofed (timestomping) or zeroed out during compilation/linking.",
     },
     784: {
         "name": "ember_header_characteristics",
@@ -337,9 +359,14 @@ class FeatureInterpreter:
 
     def get_feature_name(self, feature_index: int) -> str:
         """Get canonical or registered name for a feature index."""
+        group = self.get_feature_group(feature_index)
         if 0 <= feature_index < len(self.feature_names):
-            return self.feature_names[feature_index]
-        return f"ember_feature_{feature_index}"
+            name = self.feature_names[feature_index]
+            # Ensure name matches current group schema; if legacy model had mismatched group, use canonical
+            if group != "unknown" and group not in name and not name.startswith("Column_"):
+                return f"ember_{group}_{feature_index}"
+            return name
+        return f"ember_{group}_{feature_index}" if group != "unknown" else f"ember_feature_{feature_index}"
 
     def get_feature_description(
         self, feature_index: int, feature_name: Optional[str] = None
@@ -360,56 +387,62 @@ class FeatureInterpreter:
 
         # 2. Byte-Entropy Histogram: 256 - 511
         if group == "byteentropy":
-            bin_idx = feature_index - 256
+            start, _ = FEATURE_GROUPS.get_group_indices("byteentropy")
+            bin_idx = feature_index - start
             return (
                 f"2D Byte-entropy histogram joint distribution bin {bin_idx} "
                 "(measures localized Shannon entropy versus byte values across sliding windows)."
             )
 
-        # 3. String features: 512 - 767
+        # 3. String features
         if group == "strings":
             if feature_index in _STRINGS_SCALAR_METADATA:
                 return _STRINGS_SCALAR_METADATA[feature_index]["description"]
-            bin_idx = feature_index - 512
+            start, _ = FEATURE_GROUPS.get_group_indices("strings")
+            bin_idx = feature_index - start
             return (
                 f"Printable string character/length distribution bin {bin_idx} "
                 "(frequency count across string character classes)."
             )
 
-        # 4. General file info: 768 - 777
+        # 4. General file info
         if group == "general":
             if feature_index in _GENERAL_FEATURE_METADATA:
                 return _GENERAL_FEATURE_METADATA[feature_index]["description"]
             return f"General PE binary header metadata attribute (index {feature_index})."
 
-        # 5. Header features: 778 - 838
+        # 5. Header features
         if group == "header":
             if feature_index in _HEADER_SCALAR_METADATA:
                 return _HEADER_SCALAR_METADATA[feature_index]["description"]
-            offset = feature_index - 778
+            start, _ = FEATURE_GROUPS.get_group_indices("header")
+            offset = feature_index - start
             return (
                 f"COFF or Optional PE header field / subsystem flag attribute (offset {offset})."
             )
 
-        # 6. Section characteristics: 839 - 1034
+        # 6. Section characteristics
         if group == "section":
-            sec_idx = feature_index - 839
+            start, _ = FEATURE_GROUPS.get_group_indices("section")
+            sec_idx = feature_index - start
             return (
                 f"Section characteristics feature {sec_idx} "
                 "(encodes section sizes, virtual memory entropy, permissions, and hashed section names)."
             )
 
-        # 7. Imports: 1035 - 2282
+        # 7. Imports
         if group == "imports":
-            bin_idx = feature_index - 1035
+            start, _ = FEATURE_GROUPS.get_group_indices("imports")
+            bin_idx = feature_index - start
             return (
                 f"Feature-hashed import representation (bin index {bin_idx}). "
                 "Encodes imported dynamic link libraries (DLLs) and API function symbols via MurmurHash."
             )
 
-        # 8. Exports: 2283 - 2350
+        # 8. Exports
         if group == "exports":
-            bin_idx = feature_index - 2283
+            start, _ = FEATURE_GROUPS.get_group_indices("exports")
+            bin_idx = feature_index - start
             return (
                 f"Feature-hashed export representation (bin index {bin_idx}). "
                 "Encodes exported function symbols from the PE export directory via MurmurHash."

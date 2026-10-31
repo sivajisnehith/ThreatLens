@@ -45,18 +45,23 @@ async def get_model_info(
             "metadata": container.calibrator.metadata,
         }
 
-    limitations = [
-        "SYNTHETIC DATA: The current model was trained on synthetic data for pipeline validation. Probabilities and SHAP attributions reflect synthetic distributions and do not represent verified cybersecurity intelligence.",
-        "FEATURE HASHING: EMBER uses MurmurHash for imports (1,248 bins), exports (68 bins), and sections. Hashed bins cannot be uniquely mapped back to raw API names due to hash collisions.",
-        "NON-CAUSALITY: Feature importance indicates tree split usage, not causal malware mechanisms.",
-        "CORRELATION: Strongly correlated features may share attribution across trees.",
-    ]
-
     prov = str(metadata.get("dataset_provenance", "synthetic")).lower()
     if "genuine" in prov:
         model_status = "GENUINE DATASET — EVALUATION MODEL"
+        limitations = [
+            "STATIC ANALYSIS ONLY: Features are extracted from PE headers and static byte distributions without dynamic execution. Packing, polymorphism, or crypters may obscure malicious intent.",
+            "FEATURE HASHING: EMBER uses MurmurHash for imports (1,280 bins), exports (128 bins), and sections. Hashed bins cannot be uniquely mapped back to raw API names due to hash collisions.",
+            "NON-CAUSALITY: Feature importance indicates tree split usage, not causal malware mechanisms.",
+            "TEMPORAL DRIFT: EMBER 2018 dataset represents PE binaries from 2018; newer malware families and compiler tooling may exhibit distribution shift.",
+        ]
     else:
         model_status = "SYNTHETIC — RESEARCH ONLY"
+        limitations = [
+            "SYNTHETIC DATA: The current model was trained on synthetic data for pipeline validation. Probabilities and SHAP attributions reflect synthetic distributions and do not represent verified cybersecurity intelligence.",
+            "FEATURE HASHING: EMBER uses MurmurHash for imports (1,248 bins), exports (68 bins), and sections. Hashed bins cannot be uniquely mapped back to raw API names due to hash collisions.",
+            "NON-CAUSALITY: Feature importance indicates tree split usage, not causal malware mechanisms.",
+            "CORRELATION: Strongly correlated features may share attribution across trees.",
+        ]
 
     return ModelInfoResponse(
         algorithm="LightGBM Gradient Boosted Decision Trees (GBDT)",
@@ -88,10 +93,18 @@ async def get_model_metrics(
             detail="Evaluation metrics artifact (classification_report.json) not found on disk.",
         )
 
+    is_genuine = "genuine" in str(report.get("dataset_provenance", "")).lower()
+    dataset_type = "genuine_ember_2018_test_split" if is_genuine else "synthetic_ember_test_split"
+    disclaimer = (
+        "Official EMBER 2018 test split benchmark. Evaluated on genuine static malware features for research and evaluation."
+        if is_genuine
+        else SYNTHETIC_MODEL_DISCLAIMER
+    )
+
     return ModelMetricsResponse(
         threatlens_stage=report.get("threatlens_stage", 3),
         metrics=report.get("metrics", {}),
         confusion_matrix=report.get("confusion_matrix", {}),
-        dataset_type="synthetic_ember_test_split",
-        disclaimer=SYNTHETIC_MODEL_DISCLAIMER,
+        dataset_type=dataset_type,
+        disclaimer=disclaimer,
     )

@@ -105,8 +105,10 @@ class MalwareClassifier:
         """
         self.expected_dim: int = EmberFeatureGroups.TOTAL_FEATURES  # 2351
         self.model_path = Path(model_path) if model_path else (DATA_CONFIG.MODELS_DIR / MODEL_CONFIG.MODEL_FILENAME)
-        self.metadata_path = Path(metadata_path) if metadata_path else (DATA_CONFIG.MODELS_DIR / MODEL_CONFIG.METADATA_FILENAME)
-        self.calibrator_path = Path(calibrator_path) if calibrator_path else (DATA_CONFIG.MODELS_DIR / CALIBRATION_CONFIG.CALIBRATOR_FILENAME)
+        default_metadata = (self.model_path.parent / MODEL_CONFIG.METADATA_FILENAME) if self.model_path else (DATA_CONFIG.MODELS_DIR / MODEL_CONFIG.METADATA_FILENAME)
+        self.metadata_path = Path(metadata_path) if metadata_path else default_metadata
+        default_calibrator = (self.model_path.parent / CALIBRATION_CONFIG.CALIBRATOR_FILENAME) if self.model_path else (DATA_CONFIG.MODELS_DIR / CALIBRATION_CONFIG.CALIBRATOR_FILENAME)
+        self.calibrator_path = Path(calibrator_path) if calibrator_path else default_calibrator
 
         self.booster: Optional[lgb.Booster] = None
         self.metadata: Dict[str, Any] = {}

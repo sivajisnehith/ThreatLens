@@ -6,6 +6,7 @@ metrics once during startup. Injects them cleanly into route handlers without re
 """
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -38,9 +39,18 @@ class ModelContainer:
         reports_dir: Optional[Path] = None,
     ) -> None:
         """Load all model artifacts into memory."""
-        m_path = model_path or (DATA_CONFIG.MODELS_DIR / MODEL_CONFIG.MODEL_FILENAME)
-        c_path = calibrator_path or (DATA_CONFIG.MODELS_DIR / CALIBRATION_CONFIG.CALIBRATOR_FILENAME)
-        r_dir = reports_dir or DATA_CONFIG.REPORTS_DIR
+        # Detect active model directory: check env var, then genuine artifacts, then fallback models_dir
+        env_model_dir = os.environ.get("THREATLENS_MODEL_DIR")
+        if env_model_dir:
+            active_dir = Path(env_model_dir)
+        elif (DATA_CONFIG.GENUINE_MODELS_DIR / MODEL_CONFIG.MODEL_FILENAME).exists():
+            active_dir = DATA_CONFIG.GENUINE_MODELS_DIR
+        else:
+            active_dir = DATA_CONFIG.MODELS_DIR
+
+        m_path = model_path or (active_dir / MODEL_CONFIG.MODEL_FILENAME)
+        c_path = calibrator_path or (active_dir / CALIBRATION_CONFIG.CALIBRATOR_FILENAME)
+        r_dir = reports_dir or (active_dir if (active_dir / "classification_report.json").exists() else DATA_CONFIG.REPORTS_DIR)
 
         logger.info("Initializing ThreatLens ModelContainer services...")
 
@@ -61,6 +71,8 @@ class ModelContainer:
         if m_path.exists():
             self.classifier = MalwareClassifier(
                 model_path=m_path,
+                metadata_path=active_dir / MODEL_CONFIG.METADATA_FILENAME,
+                calibrator_path=c_path,
                 calibrator=self.calibrator,
             )
             logger.info(f"Loaded MalwareClassifier from {m_path}")

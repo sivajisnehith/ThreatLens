@@ -156,13 +156,13 @@ class TestDatasetReportAndLeakage:
 class TestModelProvenancePropagation:
     """Tests for model status reporting across API and metadata."""
 
-    def test_health_reports_synthetic_status(self):
+    def test_health_reports_status(self):
         with TestClient(app) as client:
             resp = client.get("/health")
             assert resp.status_code == 200
             data = resp.json()
             assert "model_status" in data
-            assert data["model_status"] == "SYNTHETIC — RESEARCH ONLY"
+            assert data["model_status"] in ("GENUINE DATASET — EVALUATION MODEL", "SYNTHETIC — RESEARCH ONLY")
 
     def test_model_info_reports_status_and_provenance(self):
         with TestClient(app) as client:
@@ -170,8 +170,22 @@ class TestModelProvenancePropagation:
             assert resp.status_code == 200
             data = resp.json()
             assert "model_status" in data
+            assert data["model_status"] in ("GENUINE DATASET — EVALUATION MODEL", "SYNTHETIC — RESEARCH ONLY")
+            prov = data["dataset_provenance"].lower()
+            assert "genuine" in prov or "synthetic" in prov
+
+    def test_model_provenance_synthetic_override(self, monkeypatch):
+        monkeypatch.setenv("THREATLENS_MODEL_DIR", "models")
+        from threatlens.api.dependencies import container
+        container.load_all()
+        with TestClient(app) as client:
+            resp = client.get("/model/info")
+            assert resp.status_code == 200
+            data = resp.json()
             assert data["model_status"] == "SYNTHETIC — RESEARCH ONLY"
-            assert "synthetic" in data["dataset_provenance"].lower()
+        # Reset back to default container
+        monkeypatch.delenv("THREATLENS_MODEL_DIR", raising=False)
+        container.load_all()
 
     def test_model_status_unavailable_when_unloaded(self):
         from threatlens.api.dependencies import ModelContainer

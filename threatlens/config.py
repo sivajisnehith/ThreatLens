@@ -10,16 +10,16 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 
-# Module-level constant for feature group definitions
+# Module-level constant for feature group definitions (Official EMBER 2,351 Feature Representation)
 _EMBER_GROUPS: Dict[str, tuple[int, int]] = {
-    "histogram": (0, 256),           # 256 features: byte histogram
-    "byteentropy": (256, 512),       # 256 features: byte entropy histogram
-    "strings": (512, 768),           # 256 features: printable string statistics
-    "general": (768, 778),           # 10 features: general file info
-    "header": (778, 839),            # 61 features: COFF header
-    "section": (839, 1035),          # 196 features: section characteristics
-    "imports": (1035, 2283),         # 1248 features: imported functions
-    "exports": (2283, 2351),         # 68 features: exported functions
+    "histogram": (0, 256),           # 256 features: byte histogram (0..255 counts normalized)
+    "byteentropy": (256, 512),       # 256 features: 2D byte entropy histogram (16x16 joint distribution)
+    "strings": (512, 616),           # 104 features: printable strings stats (numstrings, avlen, printables, 96 chars, entropy, paths, urls, registry, MZ)
+    "general": (616, 626),           # 10 features: general file info (size, vsize, has_debug, exports, imports, relocs, resources, sig, tls, symbols)
+    "header": (626, 688),            # 62 features: COFF & optional header (timestamp, machine 10, chars 10, subsystem 10, dll_chars 10, magic 10, + 11 scalar fields)
+    "section": (688, 943),           # 255 features: section characteristics (5 general + 50 sizes + 50 entropy + 50 vsize + 50 entry + 50 chars)
+    "imports": (943, 2223),          # 1280 features: imported libraries (256 bins) and imported functions (1024 bins)
+    "exports": (2223, 2351),         # 128 features: exported functions (128 bins)
 }
 
 
@@ -56,6 +56,7 @@ class DataConfig:
     PROCESSED_DATA_DIR: Path = DATA_DIR / "processed"
     ARTIFACTS_DIR: Path = PROJECT_ROOT / "artifacts"
     MODELS_DIR: Path = PROJECT_ROOT / "models"
+    GENUINE_MODELS_DIR: Path = ARTIFACTS_DIR / "models" / "ember2018_genuine"
     LOGS_DIR: Path = PROJECT_ROOT / "logs"
     REPORTS_DIR: Path = PROJECT_ROOT / "reports"
 
@@ -69,10 +70,25 @@ class DataConfig:
     EMBER_TRAIN_LABELS: str = "train_labels.csv"
     EMBER_TEST_FEATURES: str = "test_features.jsonl"
     EMBER_TEST_LABELS: str = "test_labels.csv"
+    EMBER_TRAIN_FEATURE_FILES: tuple[str, ...] = (
+        "train_features_0.jsonl",
+        "train_features_1.jsonl",
+        "train_features_2.jsonl",
+        "train_features_3.jsonl",
+        "train_features_4.jsonl",
+        "train_features_5.jsonl",
+    )
 
     # Synthetic data (for testing when EMBER not available)
     SYNTHETIC_SAMPLES: int = 1000
     SYNTHETIC_FEATURE_DIM: int = EmberFeatureGroups.TOTAL_FEATURES
+
+    def get_ember_raw_dir(self) -> Path:
+        """Return the directory containing extracted EMBER files."""
+        ember_subdir = self.RAW_DATA_DIR / "ember2018"
+        if ember_subdir.exists():
+            return ember_subdir
+        return self.RAW_DATA_DIR
 
     def __post_init__(self):
         """Create directories on initialization."""
@@ -81,6 +97,7 @@ class DataConfig:
             self.PROCESSED_DATA_DIR,
             self.ARTIFACTS_DIR,
             self.MODELS_DIR,
+            self.GENUINE_MODELS_DIR,
             self.LOGS_DIR,
             self.REPORTS_DIR,
         ]:

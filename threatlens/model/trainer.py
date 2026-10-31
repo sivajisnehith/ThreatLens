@@ -238,8 +238,9 @@ class ModelTrainer:
         logger.info(f"Model saved to {model_path}")
 
         # Construct comprehensive metadata
+        is_genuine = "genuine" in (provenance_notes or "").lower()
         metadata = {
-            "threatlens_stage": 3,
+            "threatlens_stage": 7 if is_genuine else 3,
             "model_type": "LightGBM",
             "model_format": "text",
             "model_file": self.config.MODEL_FILENAME,
@@ -254,6 +255,7 @@ class ModelTrainer:
                 "train_samples": result.train_samples,
                 "val_samples": result.val_samples,
             },
+            "dataset_provenance": "genuine-ember-2018" if is_genuine else "synthetic",
             "hyperparameters": {
                 "boosting_type": self.config.BOOSTING_TYPE,
                 "objective": self.config.OBJECTIVE,
