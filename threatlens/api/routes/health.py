@@ -42,6 +42,12 @@ async def health_check(
     if container.classifier and container.classifier.metadata:
         model_version = str(container.classifier.metadata.get("threatlens_stage", "3")) + ".0.0"
 
+    disclaimer = (
+        "Official EMBER 2018 benchmark evaluation model. Static analysis features for research and evaluation."
+        if "genuine" in prov
+        else SYNTHETIC_MODEL_DISCLAIMER
+    )
+
     return HealthResponse(
         status="healthy" if is_loaded else "degraded",
         model_loaded=is_loaded,
@@ -50,5 +56,5 @@ async def health_check(
         schema_version=SCHEMA_VERSION,
         calibration_status=cal_status,
         calibration_method=cal_method,
-        disclaimer=SYNTHETIC_MODEL_DISCLAIMER,
+        disclaimer=disclaimer,
     )

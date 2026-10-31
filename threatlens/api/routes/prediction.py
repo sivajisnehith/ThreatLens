@@ -37,8 +37,16 @@ async def predict_single(
         ) from e
 
     model_ver = "1.0.0"
+    is_genuine = False
     if classifier.metadata:
         model_ver = f"{classifier.metadata.get('threatlens_stage', 3)}.0.0"
+        is_genuine = "genuine" in str(classifier.metadata.get("dataset_provenance", "")).lower()
+
+    warning_notice = (
+        "Official EMBER 2018 benchmark evaluation model. Static analysis features for research and evaluation."
+        if is_genuine
+        else SYNTHETIC_MODEL_DISCLAIMER
+    )
 
     return PredictResponse(
         prediction=result.label,
@@ -48,7 +56,7 @@ async def predict_single(
         threshold=result.threshold,
         confidence=result.confidence,
         model_version=model_ver,
-        warning=SYNTHETIC_MODEL_DISCLAIMER,
+        warning=warning_notice,
     )
 
 
@@ -81,8 +89,16 @@ async def predict_batch(
         cal_probs_list = [float(p) for p in batch_result.calibrated_probabilities]
 
     model_ver = "1.0.0"
+    is_genuine = False
     if classifier.metadata:
         model_ver = f"{classifier.metadata.get('threatlens_stage', 3)}.0.0"
+        is_genuine = "genuine" in str(classifier.metadata.get("dataset_provenance", "")).lower()
+
+    warning_notice = (
+        "Official EMBER 2018 benchmark evaluation model. Static analysis features for research and evaluation."
+        if is_genuine
+        else SYNTHETIC_MODEL_DISCLAIMER
+    )
 
     return BatchPredictResponse(
         count=batch_result.count,
@@ -92,5 +108,5 @@ async def predict_batch(
         calibrated_probabilities=cal_probs_list,
         threshold=payload.threshold,
         model_version=model_ver,
-        warning=SYNTHETIC_MODEL_DISCLAIMER,
+        warning=warning_notice,
     )

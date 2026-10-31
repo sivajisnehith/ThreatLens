@@ -132,12 +132,18 @@ def render_page_prediction_results() -> None:
         )
 
     # Interpretation context
+    is_genuine = "GENUINE" in str(st.session_state.get("active_model_status", "")).upper()
+    notice = (
+        "Note: This score is evaluated on genuine EMBER 2018 static features. Static analysis research only."
+        if is_genuine
+        else "Note: This score is simulated based on synthetic EMBER features. Do not use for real-world triage."
+    )
     render_disclaimer_card(
-        title="Simulated Risk Score Interpretation",
+        title="Risk Score Interpretation",
         text=(
             f"The effective calibrated model score of <b>{effective_score:.4f}</b> was evaluated against cutoff <b>{new_threshold:.2f}</b>. "
             f"Because the score is {'at or above' if is_malicious else 'below'} the operational threshold, the system assigns a <b>{computed_label}</b> designation. "
-            "Note: This score is simulated based on synthetic EMBER features. Do not use for real-world triage."
+            f"{notice}"
         ),
     )
 

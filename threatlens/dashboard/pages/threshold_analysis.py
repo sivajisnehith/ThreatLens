@@ -24,13 +24,17 @@ from threatlens.dashboard.components.styles import (
 
 def _load_threshold_data() -> Dict[str, Any]:
     """Load precomputed threshold sweep data from disk."""
-    report_path = Path("reports/threshold_analysis.json")
-    if report_path.exists():
-        try:
-            with open(report_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
+    candidates = [
+        Path("artifacts/models/ember2018_genuine/threshold_analysis.json"),
+        Path("reports/threshold_analysis.json"),
+    ]
+    for report_path in candidates:
+        if report_path.exists():
+            try:
+                with open(report_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
     return {}
 
 
@@ -49,17 +53,20 @@ def render_page_threshold_analysis() -> None:
         icon="⚖️",
     )
 
-    render_experimental_warning(
-        custom_text=(
-            "SIMULATED THRESHOLD ANALYSIS: Threshold metrics are calculated on synthetic validation data. "
-            "These curves illustrate SOC operational posture mechanics and must NOT be used for real-world deployment rules."
-        )
+    is_genuine = "GENUINE" in str(st.session_state.get("active_model_status", "")).upper()
+    warning_text = (
+        "OPERATIONAL THRESHOLD ANALYSIS: Threshold metrics and operational postures are evaluated on the genuine "
+        "calibration partition (X_cal, N=1,500). These curves illustrate trade-offs between alert fatigue (FPR) and missed threats (FNR)."
+        if is_genuine
+        else "SIMULATED THRESHOLD ANALYSIS: Threshold metrics are calculated on synthetic validation data. "
+        "These curves illustrate SOC operational posture mechanics and must NOT be used for real-world deployment rules."
     )
+    render_experimental_warning(custom_text=warning_text)
 
     threshold_data = _load_threshold_data()
     if not threshold_data:
         st.error(
-            "Threshold analysis report 'reports/threshold_analysis.json' not found. "
+            "Threshold analysis report 'threshold_analysis.json' not found in artifacts or reports. "
             "Run Stage 5 calibration / threshold evaluation to generate this artifact."
         )
         return

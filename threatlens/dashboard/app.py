@@ -69,6 +69,7 @@ def main() -> None:
         if backend_connected:
             v = health_info.get("model_version", "1.0.0")
             model_status = health_info.get("model_status", "SYNTHETIC — RESEARCH ONLY")
+            st.session_state.active_model_status = model_status
             if model_status == "GENUINE DATASET — EVALUATION MODEL":
                 status_class = "badge-info"
             elif model_status == "MODEL UNAVAILABLE":
@@ -88,6 +89,7 @@ def main() -> None:
                 unsafe_allow_html=True,
             )
         else:
+            st.session_state.active_model_status = "MODEL UNAVAILABLE"
             st.markdown(
                 """
                 <div style="margin-bottom: 8px;">
@@ -139,28 +141,44 @@ def main() -> None:
                 st.rerun()
 
         # Telemetry & Specifications Summary
+        is_genuine = "GENUINE" in st.session_state.get("active_model_status", "").upper()
+        active_prov = "genuine-ember-2018" if is_genuine else "synthetic-ember-2018"
+        cal_method = health_info.get("calibration_method", "Sigmoid") or "Platt Scaling (Sigmoid)"
+        model_ver = health_info.get("model_version", "7.0.0" if is_genuine else "1.0.0")
+
         st.markdown(
-            """
+            f"""
             <div style="font-size: 0.78rem; color: #64748b; line-height: 1.5; margin-bottom: 14px;">
-                <div><strong>Classifier:</strong> LightGBM GBDT (v1.0.0)</div>
+                <div><strong>Classifier:</strong> LightGBM GBDT (v{model_ver})</div>
                 <div><strong>Features:</strong> EMBER 2018 (2,351 dims)</div>
-                <div><strong>Provenance:</strong> synthetic-ember-2018</div>
-                <div><strong>Calibration:</strong> Platt Scaling (Sigmoid)</div>
+                <div><strong>Provenance:</strong> {active_prov}</div>
+                <div><strong>Calibration:</strong> {cal_method}</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
         # Persistent Warning Badge in Sidebar
-        st.markdown(
-            """
-            <div class="soc-warning-banner" style="font-size: 0.74rem; padding: 8px 10px;">
-                <strong>⚠️ DEMO PROVENANCE</strong><br>
-                Model trained on synthetic data. Never use for real-world quarantine decisions.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        if is_genuine:
+            st.markdown(
+                """
+                <div class="soc-info-banner" style="font-size: 0.74rem; padding: 8px 10px;">
+                    <strong>ℹ️ EVALUATION MODEL</strong><br>
+                    Trained on genuine EMBER 2018 dataset. Static analysis research only.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                """
+                <div class="soc-warning-banner" style="font-size: 0.74rem; padding: 8px 10px;">
+                    <strong>⚠️ DEMO PROVENANCE</strong><br>
+                    Model trained on synthetic data. Never use for real-world quarantine decisions.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     # Dispatch to Selected Page
     page_func = PAGES.get(selected_page, render_page_security_overview)

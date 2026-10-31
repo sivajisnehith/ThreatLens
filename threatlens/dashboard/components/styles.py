@@ -131,6 +131,19 @@ DARK_THEME_CSS = """
     font-size: 0.85rem;
 }
 
+.soc-info-banner {
+    background-color: rgba(56, 189, 248, 0.12);
+    border-left: 4px solid #38bdf8;
+    border-top: 1px solid rgba(56, 189, 248, 0.3);
+    border-right: 1px solid rgba(56, 189, 248, 0.3);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    color: #7dd3fc;
+    font-size: 0.85rem;
+}
+
 /* Page headers */
 .page-header-title {
     font-size: 1.75rem;
@@ -180,18 +193,34 @@ def render_header(title: str, subtitle: str, icon: str = "🛡️") -> None:
     )
 
 
-def render_experimental_warning(custom_text: str | None = None) -> None:
-    """Render a high-visibility persistent experimental synthetic model banner."""
-    message = (
-        custom_text
-        or "EXPERIMENTAL/DEMO SYSTEM: The active model was trained on synthetic EMBER 2018 benchmark "
-        "distributions. Model scores, classifications, and SHAP attributions demonstrate system pipeline mechanics "
-        "and must NOT be used for real-world malware quarantine or incident response decisions."
-    )
+def render_experimental_warning(custom_text: str | None = None, is_genuine: bool | None = None) -> None:
+    """Render a high-visibility notice reflecting active model provenance."""
+    if is_genuine is None:
+        model_status = st.session_state.get("active_model_status", "")
+        is_genuine = "GENUINE" in str(model_status).upper()
+
+    if custom_text:
+        message = custom_text
+    elif is_genuine:
+        message = (
+            "GENUINE EMBER 2018 EVALUATION MODEL: The active classifier was retrained on genuine EMBER 2018 "
+            "benchmark records. Model scores, calibrated probabilities, and SHAP attributions reflect real PE static "
+            "feature distributions for cybersecurity research and evaluation."
+        )
+    else:
+        message = (
+            "EXPERIMENTAL/DEMO SYSTEM: The active model was trained on synthetic EMBER 2018 benchmark "
+            "distributions. Model scores, classifications, and SHAP attributions demonstrate system pipeline mechanics "
+            "and must NOT be used for real-world malware quarantine or incident response decisions."
+        )
+
+    badge_title = "ℹ️ EVALUATION MODEL NOTICE:" if is_genuine else "⚠️ EXPERIMENTAL PROVENANCE NOTICE:"
+    banner_class = "soc-info-banner" if is_genuine else "soc-warning-banner"
+
     st.markdown(
         f"""
-        <div class="soc-warning-banner">
-            <strong>⚠️ EXPERIMENTAL PROVENANCE NOTICE:</strong><br>
+        <div class="{banner_class}">
+            <strong>{badge_title}</strong><br>
             {message}
         </div>
         """,

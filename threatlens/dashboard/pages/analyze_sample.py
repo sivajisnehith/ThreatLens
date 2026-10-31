@@ -35,6 +35,18 @@ from threatlens.dashboard.state import (
 )
 
 
+def _get_test_split_size() -> int:
+    """Return total number of samples in X_test.npy."""
+    test_path = Path("data/processed/X_test.npy")
+    if test_path.exists():
+        try:
+            arr = np.load(test_path, mmap_mode="r")
+            return len(arr)
+        except Exception:
+            pass
+    return 2500
+
+
 def _load_sample_from_test_split(index: int) -> Optional[np.ndarray]:
     """Load a sample vector from data/processed/X_test.npy if available."""
     test_path = Path("data/processed/X_test.npy")
@@ -226,8 +238,9 @@ def render_page_analyze_sample() -> None:
 
         if input_choice == "Use Benchmark Test Split Sample":
             col_sel, col_info = st.columns([2, 3])
+            max_idx = max(0, _get_test_split_size() - 1)
             with col_sel:
-                sample_idx = st.slider("Select Sample Index from X_test (0 - 239):", 0, 239, 0, key="ember_sample_slider")
+                sample_idx = st.slider(f"Select Sample Index from X_test (0 - {max_idx}):", 0, max_idx, 0, key="ember_sample_slider")
             with col_info:
                 sample_vec = _load_sample_from_test_split(sample_idx)
                 if sample_vec is not None:

@@ -24,21 +24,31 @@ from threatlens.dashboard.state import get_api_client
 def _load_offline_metadata() -> tuple[Dict[str, Any], Dict[str, Any]]:
     """Load model and calibration metadata files directly if backend is offline."""
     m_info, c_info = {}, {}
-    m_path = Path("models/model_metadata.json")
-    if m_path.exists():
-        try:
-            with open(m_path, "r", encoding="utf-8") as f:
-                m_info = json.load(f)
-        except Exception:
-            pass
+    candidates_m = [
+        Path("artifacts/models/ember2018_genuine/model_metadata.json"),
+        Path("models/model_metadata.json"),
+    ]
+    for m_path in candidates_m:
+        if m_path.exists():
+            try:
+                with open(m_path, "r", encoding="utf-8") as f:
+                    m_info = json.load(f)
+                    break
+            except Exception:
+                pass
 
-    c_path = Path("models/calibration_metadata.json")
-    if c_path.exists():
-        try:
-            with open(c_path, "r", encoding="utf-8") as f:
-                c_info = json.load(f)
-        except Exception:
-            pass
+    candidates_c = [
+        Path("artifacts/models/ember2018_genuine/calibration_metadata.json"),
+        Path("models/calibration_metadata.json"),
+    ]
+    for c_path in candidates_c:
+        if c_path.exists():
+            try:
+                with open(c_path, "r", encoding="utf-8") as f:
+                    c_info = json.load(f)
+                    break
+            except Exception:
+                pass
     return m_info, c_info
 
 
@@ -145,16 +155,31 @@ def render_page_model_information() -> None:
 
     # Critical Limitations Section
     st.subheader("Critical Limitations & Production Disclosures")
-    limitations = [
-        ("1. Synthetic Data Training", "The currently serialized model was trained on synthetic benchmark noise distributions generated to validate pipeline integrity without downloading the full 4 GB EMBER 2018 corpus."),
-        ("2. Chance-Level Discrimination", "Model accuracy (~50.5%) and ROC-AUC (~50.7%) on the test split are approximately at coin-flip level. The classifier has learned synthetic statistical noise rather than genuine malware signatures."),
-        ("3. Strict Pipeline Isolation", "The 85-dimensional features extracted by ThreatLens' custom static PE extractor (Mode A) cannot be evaluated by this LightGBM model (Mode B). They are mathematically and structurally incompatible."),
-        ("4. Hashing Collisions in EMBER", "EMBER 2018 utilizes MurmurHash for imports (1,248 bins), exports (68 bins), and section names. Individual hashed bins cannot be uniquely mapped back to raw API names."),
-        ("5. Prohibition on Production Deployment", "This system must NOT be deployed in live SOC or security quarantine pipelines until the classifier is retrained on authentic, verified malware and benign PE datasets."),
-    ]
-
-    for title, desc in limitations:
-        render_disclaimer_card(title=title, text=desc)
+    api_limitations = model_info.get("limitations", [])
+    if api_limitations:
+        for idx, lim_text in enumerate(api_limitations, 1):
+            if ":" in lim_text:
+                title, desc = lim_text.split(":", 1)
+            else:
+                title, desc = f"Limitation {idx}", lim_text
+            render_disclaimer_card(title=f"{idx}. {title.strip()}", text=desc.strip())
+    else:
+        is_genuine = "genuine" in str(model_info.get("dataset_provenance", "")).lower()
+        default_limitations = [
+            ("1. Static Analysis Only", "Features are extracted from PE headers and static byte distributions without dynamic execution. Runtime packing, polymorphism, or crypters may obscure malicious behavior."),
+            ("2. Temporal Drift", "The EMBER 2018 dataset represents binaries from 2018; newer threat variants and compiler toolchains may exhibit distribution shift."),
+            ("3. Strict Pipeline Isolation", "The 85-dimensional features extracted by ThreatLens' custom static PE extractor (Mode A) cannot be evaluated by this LightGBM model (Mode B). They are mathematically and structurally incompatible."),
+            ("4. Hashing Collisions in EMBER", "EMBER 2018 utilizes MurmurHash for imports (1,280 bins), exports (128 bins), and section names. Individual hashed bins cannot be uniquely mapped back to raw API names."),
+            ("5. Non-Causality of SHAP Values", "Feature importance indicates decision tree split usage and margin impact, not causal malware mechanisms."),
+        ] if is_genuine else [
+            ("1. Synthetic Data Training", "The currently serialized model was trained on synthetic benchmark noise distributions generated to validate pipeline integrity."),
+            ("2. Chance-Level Discrimination", "Model accuracy (~50.5%) and ROC-AUC (~50.7%) on the test split are approximately at coin-flip level."),
+            ("3. Strict Pipeline Isolation", "The 85-dimensional features extracted by ThreatLens' custom static PE extractor (Mode A) cannot be evaluated by this LightGBM model (Mode B)."),
+            ("4. Hashing Collisions in EMBER", "EMBER 2018 utilizes MurmurHash for imports (1,248 bins), exports (68 bins), and section names."),
+            ("5. Prohibition on Production Deployment", "This system must NOT be deployed in live SOC or security quarantine pipelines until the classifier is retrained on authentic datasets."),
+        ]
+        for title, desc in default_limitations:
+            render_disclaimer_card(title=title, text=desc)
 
     st.markdown("---")
 

@@ -28,13 +28,17 @@ from threatlens.dashboard.components.styles import (
 
 def _load_global_shap_data() -> Dict[str, Any]:
     """Load serialized global SHAP importance report from disk."""
-    report_path = Path("reports/shap_global_importance.json")
-    if report_path.exists():
-        try:
-            with open(report_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
+    candidates = [
+        Path("artifacts/models/ember2018_genuine/shap_global_importance.json"),
+        Path("reports/shap_global_importance.json"),
+    ]
+    for report_path in candidates:
+        if report_path.exists():
+            try:
+                with open(report_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
     return {}
 
 
@@ -46,18 +50,21 @@ def render_page_global_analysis() -> None:
         icon="🌐",
     )
 
-    render_experimental_warning(
-        custom_text=(
-            "Global feature importance reflects a model trained on synthetic data. "
-            "It must not be interpreted as genuine malware indicators."
-        )
+    is_genuine = "GENUINE" in str(st.session_state.get("active_model_status", "")).upper()
+    warning_text = (
+        "Global feature importance reflects the LightGBM classifier evaluated on genuine EMBER 2018 benchmark data. "
+        "Feature importances indicate tree split utilization, not necessarily causal malware mechanisms."
+        if is_genuine
+        else "Global feature importance reflects a model trained on synthetic data. "
+        "It must not be interpreted as genuine malware indicators."
     )
+    render_experimental_warning(custom_text=warning_text)
 
     global_data = _load_global_shap_data()
     if not global_data:
         st.error(
-            "Could not locate 'reports/shap_global_importance.json'. "
-            "Run 'python scripts/explain.py --mode global --data-path data/processed/X_test.npy' to generate it."
+            "Could not locate 'shap_global_importance.json' in artifacts or reports. "
+            "Run training or 'python scripts/explain.py --mode global' to generate it."
         )
         return
 
@@ -74,10 +81,7 @@ def render_page_global_analysis() -> None:
 
     render_disclaimer_card(
         title="Global SHAP Metric Note",
-        text=(
-            "Global feature importance reflects a model trained on synthetic data. "
-            "It must not be interpreted as genuine malware indicators."
-        ),
+        text=warning_text,
     )
 
     st.markdown("---")

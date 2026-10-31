@@ -38,6 +38,13 @@ async def explain_prediction(
             detail="Explanation failed due to an internal error.",
         ) from e
 
+    is_genuine = "genuine" in str(explainer.metadata.get("dataset_provenance", "")).lower()
+    warning_notice = (
+        "Official EMBER 2018 benchmark evaluation model. Static analysis features for research and evaluation."
+        if is_genuine
+        else SYNTHETIC_MODEL_DISCLAIMER
+    )
+
     return ExplainResponse(
         prediction=explanation.prediction,
         prediction_label=explanation.prediction_label,
@@ -49,5 +56,5 @@ async def explain_prediction(
         additivity_error=explanation.additivity_error,
         top_positive_contributors=[c.to_dict() for c in explanation.top_positive_contributors],
         top_negative_contributors=[c.to_dict() for c in explanation.top_negative_contributors],
-        warning=SYNTHETIC_MODEL_DISCLAIMER,
+        warning=warning_notice,
     )

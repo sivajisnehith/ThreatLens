@@ -51,7 +51,7 @@ class TestHealthEndpoint:
         assert data["model_loaded"] is True
         assert data["schema_version"] == "1.0.0"
         assert data["calibration_status"] in ("calibrated", "uncalibrated")
-        assert "synthetic" in data["disclaimer"].lower()
+        assert "synthetic" in data["disclaimer"].lower() or "ember" in data["disclaimer"].lower()
 
 
 class TestModelInfoEndpoint:

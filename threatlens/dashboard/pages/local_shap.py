@@ -169,13 +169,18 @@ def render_page_local_shap() -> None:
     st.plotly_chart(fig_shap, use_container_width=True)
 
     # Contextual Disclaimer Card
+    is_genuine = "GENUINE" in str(st.session_state.get("active_model_status", "")).upper()
+    notice_text = (
+        "TreeSHAP computes exact local feature attributions showing how individual static features push the model's log-odds margin relative to the training baseline. "
+        "Attributions indicate statistical correlation with the training data distribution, not causal malware mechanisms."
+        if is_genuine
+        else "SHAP explains the model's internal decision logic, <i>not whether the model's prediction is factually correct</i>. "
+        "Since this model was trained on synthetic data for pipeline validation, these attributions reflect patterns in synthetic noise "
+        "and are intended strictly for educational and architectural demonstration."
+    )
     render_disclaimer_card(
         title="Understanding SHAP Attributions",
-        text=(
-            "SHAP explains the model's internal decision logic, <i>not whether the model's prediction is factually correct</i>. "
-            "Since this model was trained on synthetic data for pipeline validation, these attributions reflect patterns in synthetic noise "
-            "and are intended strictly for educational and architectural demonstration."
-        ),
+        text=notice_text,
     )
 
     # Tabular Breakdown of Top Contributors
