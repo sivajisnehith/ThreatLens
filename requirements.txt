@@ -1,0 +1,36 @@
+# ThreatLens - Explainable AI-Powered Static Malware Detection
+# Python 3.12 compatible dependencies
+
+# Core Data Science
+numpy>=1.26.0,<2.0.0
+pandas>=2.1.0,<3.0.0
+scikit-learn>=1.3.0,<2.0.0
+
+# Gradient Boosting
+lightgbm>=4.3.0,<5.0.0
+
+# Explainability
+shap>=0.44.0,<1.0.0
+
+# PE File Analysis
+pefile>=2023.2.7,<2025.0.0
+
+# Web Framework
+fastapi>=0.109.0,<1.0.0
+uvicorn>=0.27.0,<1.0.0
+pydantic>=2.5.0,<3.0.0
+httpx>=0.25.0,<1.0.0
+
+# Visualization
+streamlit>=1.30.0,<2.0.0
+plotly>=5.18.0,<6.0.0
+matplotlib>=3.8.0,<4.0.0
+
+# Utilities
+joblib>=1.3.0,<2.0.0
+pyyaml>=6.0.1,<7.0.0
+tqdm>=4.66.0,<5.0.0
+
+# Testing
+pytest>=7.4.0,<8.0.0
+pytest-cov>=4.1.0,<5.0.0

@@ -1,0 +1,52 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+
+# Data & Datasets (EMBER 2018 memmap, jsonl, tar.gz)
+data/
+*.dat
+*.jsonl
+*.tar.gz
+*.tar.bz2
+*.npy
+*.csv
+*.parquet
+
+# Models & Preprocessor Artifacts
+models/
+artifacts/
+*.joblib
+*.pkl
+*.onnx
+
+# Logs & Output Reports
+logs/
+*.log
+reports/
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment / Secrets
+.env
+*.pem
